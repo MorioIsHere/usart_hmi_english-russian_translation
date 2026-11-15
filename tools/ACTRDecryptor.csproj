@@ -4,9 +4,9 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+    <Nullable>disable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <Compile Include="ACTRDecryptor.cs" />
+    <Compile Include="AppDllPassManaged.cs" />
   </ItemGroup>
 
 </Project>

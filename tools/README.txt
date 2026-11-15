@@ -8,10 +8,11 @@ This directory contains tools for decrypting the ACTR.dll container.
 FILES IN THIS DIRECTORY
 ================================================================================
 
-ACTRDecryptor.exe               Main decryption tool (32-bit)
-AppDllPass.dll                  Native decryption library (required)
 ACTRDecryptor.cs                Source code (C#)
-ACTRDecryptor.csproj            Project file for rebuilding
+AppDllPassManaged.cs            C# port of AppDllPass.dll (no native dependency)
+ACTRDecryptor.csproj            Project file (builds win-x64 / amd64)
+ACTRDecryptor.exe               Legacy pre-built tool (32-bit, old version)
+AppDllPass.dll                  Legacy native library (only needed by the 32-bit exe)
 
 ================================================================================
 USAGE
@@ -77,17 +78,18 @@ What It Does:
 3. XOR decrypts headers with key 0x09
 4. Extracts assembly name, size, compression flag
 5. Reads encrypted payload
-6. Decrypts using AppDllPass_Decode() with DateTime-based keys
+6. Decrypts using AppDllPassManaged.Decode() (C# port of AppDllPass_Decode)
 7. Decompresses GZIP data (if compression flag = 1)
 8. Writes decrypted DLL to E:\decrypted\
 
 Encryption:
 -----------
 
-- Algorithm: Custom XOR cipher with state machine
-- Key derivation: DateTime (Year, Month, Day, Hour, Minute, Second, Millisecond)
-- Buffer size: 1024 bytes
-- Assembly-specific index for additional entropy
+- Algorithm: custom add/xor/shift cipher on 32-bit words, 3-word state machine
+- Key: constant string embedded in AppDllPass.dll (data decryption does NOT
+  depend on the time; the original DLL only wrote a time-based anti-tamper
+  value into the caller's key buffer, which is not needed)
+- Trailing length % 4 bytes are left unencrypted
 
 Compression:
 ------------
@@ -115,9 +117,9 @@ Container Format:
 REQUIREMENTS
 ================================================================================
 
-- Windows (32-bit or 64-bit)
-- .NET 9.0 Runtime (for ACTRDecryptor.exe)
-- AppDllPass.dll must be in same directory
+- Windows x64
+- .NET 9.0 Runtime (x64)
+- AppDllPass.dll is NOT required for the x64 build
 - ACTR.dll file (from USART HMI installation)
 
 ================================================================================
@@ -134,7 +136,7 @@ If you need to modify the decryptor:
 
 4. Output:
 
-   bin\Release\net9.0-windows\win-x86\ACTRDecryptor.exe
+   bin\Release\net9.0-windows\win-x64\ACTRDecryptor.exe
 
 5. Copy to this directory
 
@@ -142,14 +144,11 @@ If you need to modify the decryptor:
 TROUBLESHOOTING
 ================================================================================
 
-Error: "Could not load AppDllPass.dll"
---------------------------------------
-Solution: Ensure AppDllPass.dll is in the same directory as ACTRDecryptor.exe
-
-
-Error: "BadImageFormatException"
----------------------------------
-Solution: Use 32-bit version (this package includes 32-bit)
+Error: "Could not load AppDllPass.dll" / "BadImageFormatException"
+------------------------------------------------------------------
+You are running the legacy 32-bit exe. Build the x64 version instead:
+  dotnet build ACTRDecryptor.csproj -c Release
+It does not use AppDllPass.dll.
 
 
 Error: "ACTR.dll not found"
@@ -198,7 +197,7 @@ NOTES
 ================================================================================
 
 - The decryption process is deterministic (same input = same output)
-- Decryption keys are derived from current DateTime
+- Data decryption is deterministic and does not depend on the date/time
 - Output files are standard .NET assemblies (can be opened in dnSpy)
 - Original ACTR.dll is never modified (read-only operation)
 - The tool creates E:\decrypted\ if it doesn't exist

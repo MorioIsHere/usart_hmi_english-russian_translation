@@ -18,9 +18,8 @@ I purchased 3 TJC brand HMI display screens from AliExpress while living in Arge
 
 ### ⚠️ Important Notes
 
-- **Platform:** Windows x86 (32-bit only)
-- **Target Application:** USART HMI v1.67.5
-- **All components are 32-bit** - Do not attempt to use 64-bit versions
+- **Platform:** Windows x64 (amd64). The decryption tool is now pure C# and builds as 64-bit (`win-x64`)
+- **Target Application:** USART HMI v1.67.5 (the application itself remains 32-bit; the modified `hmitype.dll` is a .NET assembly and is not affected)
 - This is a translation/localization tool, not for piracy or license circumvention
 - Personal and educational use only
 
@@ -28,11 +27,11 @@ I purchased 3 TJC brand HMI display screens from AliExpress while living in Arge
 
 #### Prerequisites
 
-- Windows (32-bit or 64-bit OS, but we'll use 32-bit tools)
+- Windows x64
 - USART HMI v1.67.5 installed at `C:\Program Files (x86)\USART HMI\`
 - Administrator privileges
-- [dnSpy (x86 version)](https://github.com/dnSpy/dnSpy/releases) - Free .NET assembly editor
-- .NET 9.0 SDK (if rebuilding tools)
+- [dnSpy](https://github.com/dnSpy/dnSpy/releases) - Free .NET assembly editor
+- .NET 9.0 SDK (to build the x64 decryption tool)
 
 #### Step 1: Decrypt ACTR.dll
 
@@ -119,10 +118,11 @@ Start the application normally. The UI should now display English text for all t
 ├── QUICKSTART.md                # 15-minute setup guide
 ├── INDEX.md                     # Documentation navigation
 ├── tools/
-│   ├── ACTRDecryptor.exe        # 32-bit decryption tool (pre-built)
+│   ├── ACTRDecryptor.exe        # Legacy 32-bit pre-built tool (needs AppDllPass.dll)
 │   ├── ACTRDecryptor.cs         # Source code
-│   ├── ACTRDecryptor.csproj     # .NET 9.0 project
-│   ├── AppDllPass.dll           # Native 32-bit crypto library
+│   ├── AppDllPassManaged.cs     # C# port of AppDllPass.dll (x64-ready)
+│   ├── ACTRDecryptor.csproj     # .NET 9.0 project (win-x64)
+│   ├── AppDllPass.dll           # Legacy native 32-bit crypto library (no longer needed by the x64 build)
 │   └── README.txt               # Tool documentation
 ├── scripts/
 │   ├── decrypt_actr.bat         # Automated decryption
@@ -239,9 +239,9 @@ cd tools
 dotnet build ACTRDecryptor.csproj -c Release
 ```
 
-**Output:** `tools\bin\Release\net9.0-windows\win-x86\ACTRDecryptor.exe`
+**Output:** `tools\bin\Release\net9.0-windows\win-x64\ACTRDecryptor.exe`
 
-**⚠️ Critical:** ACTRDecryptor.exe MUST be built as 32-bit (win-x86) to interface with the native 32-bit `AppDllPass.dll`. The project file is already configured correctly.
+**Note:** The encryption from the native 32-bit `AppDllPass.dll` has been ported to C# (`AppDllPassManaged.cs`, verified byte-for-byte against the original DLL), so the tool builds and runs as 64-bit without any native dependency. `decrypt_actr.bat` uses this x64 build automatically when it exists.
 
 ### 📜 License
 
@@ -269,9 +269,8 @@ Compré 3 pantallas HMI de la marca TJC por AliExpress desde Argentina. Estas pa
 
 ### ⚠️ Notas Importantes
 
-- **Plataforma:** Windows x86 (solo 32-bit)
-- **Aplicación Objetivo:** USART HMI v1.67.5
-- **Todos los componentes son 32-bit** - No intentes usar versiones de 64-bit
+- **Plataforma:** Windows x64 (amd64). La herramienta de desencriptación ahora es C# puro y se compila como 64-bit (`win-x64`)
+- **Aplicación Objetivo:** USART HMI v1.67.5 (la aplicación sigue siendo de 32-bit; el `hmitype.dll` modificado es un ensamblado .NET y no se ve afectado)
 - Esta es una herramienta de traducción/localización, no para piratería o elusión de licencias
 - Solo para uso personal y educativo
 
@@ -279,11 +278,11 @@ Compré 3 pantallas HMI de la marca TJC por AliExpress desde Argentina. Estas pa
 
 #### Requisitos Previos
 
-- Windows (SO de 32 o 64-bit, pero usaremos herramientas de 32-bit)
+- Windows x64
 - USART HMI v1.67.5 instalado en `C:\Program Files (x86)\USART HMI\`
 - Privilegios de Administrador
-- [dnSpy (versión x86)](https://github.com/dnSpy/dnSpy/releases) - Editor gratuito de ensamblados .NET
-- .NET 9.0 SDK (si necesitas recompilar las herramientas)
+- [dnSpy](https://github.com/dnSpy/dnSpy/releases) - Editor gratuito de ensamblados .NET
+- .NET 9.0 SDK (para compilar la herramienta x64)
 
 #### Paso 1: Desencriptar ACTR.dll
 
@@ -370,10 +369,11 @@ Inicia la aplicación normalmente. La UI ahora debería mostrar texto en inglés
 ├── QUICKSTART.md                # Guía de configuración de 15 minutos
 ├── INDEX.md                     # Navegación de documentación
 ├── tools/
-│   ├── ACTRDecryptor.exe        # Herramienta de desencriptación 32-bit (pre-compilada)
+│   ├── ACTRDecryptor.exe        # Herramienta 32-bit heredada (pre-compilada, requiere AppDllPass.dll)
 │   ├── ACTRDecryptor.cs         # Código fuente
-│   ├── ACTRDecryptor.csproj     # Proyecto .NET 9.0
-│   ├── AppDllPass.dll           # Biblioteca criptográfica nativa 32-bit
+│   ├── AppDllPassManaged.cs     # Port en C# de AppDllPass.dll (listo para x64)
+│   ├── ACTRDecryptor.csproj     # Proyecto .NET 9.0 (win-x64)
+│   ├── AppDllPass.dll           # Biblioteca nativa 32-bit heredada (ya no la necesita la versión x64)
 │   └── README.txt               # Documentación de herramientas
 ├── scripts/
 │   ├── decrypt_actr.bat         # Desencriptación automatizada
@@ -490,9 +490,9 @@ cd tools
 dotnet build ACTRDecryptor.csproj -c Release
 ```
 
-**Salida:** `tools\bin\Release\net9.0-windows\win-x86\ACTRDecryptor.exe`
+**Salida:** `tools\bin\Release\net9.0-windows\win-x64\ACTRDecryptor.exe`
 
-**⚠️ Crítico:** ACTRDecryptor.exe DEBE compilarse como 32-bit (win-x86) para interfaz con la `AppDllPass.dll` nativa de 32-bit. El archivo de proyecto ya está configurado correctamente.
+**Nota:** El cifrado de la `AppDllPass.dll` nativa de 32-bit fue portado a C# (`AppDllPassManaged.cs`, verificado byte a byte contra la DLL original), por lo que la herramienta se compila y ejecuta en 64-bit sin dependencias nativas. `decrypt_actr.bat` usa automáticamente esta versión x64 si existe.
 
 ### 📜 Licencia
 
