@@ -8,31 +8,79 @@ namespace ACTRDecryptor
         // El cifrado de AppDllPass.dll (nativa, solo 32-bit) está reimplementado en C#
         // en AppDllPassManaged.cs, por lo que la herramienta funciona en x64 (amd64).
 
-        static void Main(string[] args)
+        static readonly string[] DefaultActrPaths =
         {
-            Console.WriteLine("ACTR.dll Decryptor/Encryptor");
-            Console.WriteLine("=============================\n");
+            @"C:\Program Files (x86)\USART HMI\ACTR.dll",
+            @"C:\Program Files\USART HMI\ACTR.dll",
+        };
+
+        static int Main(string[] args)
+        {
+            try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch { }
+
+            // Sin argumentos = doble clic en el Explorador: no cerrar la ventana al terminar.
+            bool interactive = args.Length == 0;
+            int code;
+            try
+            {
+                code = Run(args);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\nERROR: {ex.Message}");
+                code = 1;
+            }
+
+            if (interactive)
+            {
+                Console.WriteLine("\nPresione Enter para salir / Press Enter to exit...");
+                try { Console.ReadLine(); } catch { }
+            }
+            return code;
+        }
+
+        static int Run(string[] args)
+        {
+            Console.WriteLine("ACTR.dll Decryptor/Encryptor (x64)");
+            Console.WriteLine("==================================\n");
+
+            // Doble clic: buscar ACTR.dll automáticamente (o en la carpeta del exe)
+            if (args.Length == 0)
+            {
+                string found = FindDefaultActr();
+                if (found == null)
+                {
+                    Console.WriteLine("No se encontró ACTR.dll / ACTR.dll not found in:");
+                    foreach (var p in DefaultActrPaths) Console.WriteLine("  " + p);
+                    Console.WriteLine("\nArrastre ACTR.dll sobre ACTRDecryptor.exe, o escriba la ruta aquí");
+                    Console.WriteLine("Drag ACTR.dll onto ACTRDecryptor.exe, or type/paste its path here:");
+                    Console.Write("> ");
+                    found = (Console.ReadLine() ?? "").Trim().Trim('"');
+                    if (found.Length == 0) { PrintUsage(); return 1; }
+                }
+                args = new[] { "decode", found };
+            }
+            // Arrastrar y soltar un archivo sobre el exe
+            else if (args.Length == 1 && File.Exists(args[0]))
+            {
+                args = new[] { "decode", args[0] };
+            }
 
             if (args.Length < 2)
             {
-                Console.WriteLine("Uso:");
-                Console.WriteLine("  Desencriptar: ACTRDecryptor.exe decode <archivo_ACTR.dll>");
-                Console.WriteLine("  Encriptar:    ACTRDecryptor.exe encode <directorio_assemblies>");
-                Console.WriteLine("\nEjemplos:");
-                Console.WriteLine("  ACTRDecryptor.exe decode \"C:\\Program Files (x86)\\USART HMI\\ACTR.dll\"");
-                Console.WriteLine("  ACTRDecryptor.exe encode decrypted\\");
-                return;
+                PrintUsage();
+                return 1;
             }
 
             string mode = args[0].ToLower();
-            string path = args[1];
+            string path = args[1].Trim('"');
 
             if (mode == "decode")
             {
                 if (!File.Exists(path))
                 {
-                    Console.WriteLine($"Error: No se encuentra el archivo {path}");
-                    return;
+                    Console.WriteLine($"Error: No se encuentra el archivo / file not found: {path}");
+                    return 1;
                 }
                 DecodeACTR(path);
             }
@@ -40,14 +88,61 @@ namespace ACTRDecryptor
             {
                 if (!Directory.Exists(path))
                 {
-                    Console.WriteLine($"Error: No se encuentra el directorio {path}");
-                    return;
+                    Console.WriteLine($"Error: No se encuentra el directorio / directory not found: {path}");
+                    return 1;
                 }
                 EncodeACTR(path);
             }
             else
             {
                 Console.WriteLine("Error: Modo debe ser 'decode' o 'encode'");
+                return 1;
+            }
+            return 0;
+        }
+
+        static string FindDefaultActr()
+        {
+            string local = Path.Combine(AppContext.BaseDirectory, "ACTR.dll");
+            if (File.Exists(local)) return local;
+            foreach (var p in DefaultActrPaths)
+                if (File.Exists(p)) return p;
+            return null;
+        }
+
+        static void PrintUsage()
+        {
+            Console.WriteLine("Uso / Usage:");
+            Console.WriteLine("  Doble clic: busca ACTR.dll en C:\\Program Files (x86)\\USART HMI\\");
+            Console.WriteLine("  Arrastrar ACTR.dll sobre ACTRDecryptor.exe");
+            Console.WriteLine("  Desencriptar: ACTRDecryptor.exe decode <archivo_ACTR.dll>");
+            Console.WriteLine("  Encriptar:    ACTRDecryptor.exe encode <directorio_assemblies>");
+        }
+
+        /// <summary>
+        /// Carpeta de salida: "decrypted" junto a ACTR.dll; si no hay permiso de escritura
+        /// (p. ej. Program Files sin admin), Documentos\USART_HMI_decrypted.
+        /// </summary>
+        static string GetOutputDir(string actrPath)
+        {
+            string preferred = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(actrPath)) ?? ".", "decrypted");
+            try
+            {
+                Directory.CreateDirectory(preferred);
+                string probe = Path.Combine(preferred, ".write_test");
+                File.WriteAllText(probe, "");
+                File.Delete(probe);
+                return preferred;
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException)
+            {
+                string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                if (string.IsNullOrEmpty(docs)) docs = AppContext.BaseDirectory;
+                string fallback = Path.Combine(docs, "USART_HMI_decrypted");
+                Directory.CreateDirectory(fallback);
+                Console.WriteLine($"Sin permiso de escritura en / no write access to: {preferred}");
+                Console.WriteLine($"Usando / using: {fallback}");
+                return fallback;
             }
         }
 
@@ -62,8 +157,7 @@ namespace ACTRDecryptor
             // El archivo ACTR tiene múltiples assemblies encriptados
             // Formato: [Header 64 bytes XOR 0x09][Payload]...
 
-            string outputDir = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(actrPath)) ?? ".", "decrypted");
-            Directory.CreateDirectory(outputDir);
+            string outputDir = GetOutputDir(actrPath);
 
             using (MemoryStream ms = new MemoryStream(actrData))
             using (BinaryReader br = new BinaryReader(ms))
