@@ -11,8 +11,8 @@ FILES IN THIS DIRECTORY
 ACTRDecryptor.cs                Source code (C#)
 AppDllPassManaged.cs            C# port of AppDllPass.dll (no native dependency)
 ACTRDecryptor.csproj            Project file (builds win-x64 / amd64)
-ACTRDecryptor.exe               Legacy pre-built tool (32-bit, old version)
-AppDllPass.dll                  Legacy native library (only needed by the 32-bit exe)
+ACTRDecryptor.exe               Pre-built x64 tool (self-contained single file,
+                                no .NET installation needed)
 
 ================================================================================
 USAGE
@@ -25,7 +25,7 @@ To decrypt ACTR.dll:
 
     ACTRDecryptor.exe decode "C:\Program Files (x86)\USART HMI\ACTR.dll"
 
-Output will be in: E:\decrypted\
+Output will be in: C:\Program Files (x86)\USART HMI\decrypted\
 
 
 Automated Script:
@@ -40,7 +40,7 @@ Or use the automated script in ..\scripts\:
 OUTPUT
 ================================================================================
 
-The decryptor extracts 21 DLL files to E:\decrypted\:
+The decryptor extracts 21 DLL files to C:\Program Files (x86)\USART HMI\decrypted\:
 
   1. achmiface.dll              (666 KB)
   2. AxInterop.WMPLib.dll       (61 KB)
@@ -80,7 +80,7 @@ What It Does:
 5. Reads encrypted payload
 6. Decrypts using AppDllPassManaged.Decode() (C# port of AppDllPass_Decode)
 7. Decompresses GZIP data (if compression flag = 1)
-8. Writes decrypted DLL to E:\decrypted\
+8. Writes decrypted DLL to C:\Program Files (x86)\USART HMI\decrypted\
 
 Encryption:
 -----------
@@ -118,8 +118,8 @@ REQUIREMENTS
 ================================================================================
 
 - Windows x64
-- .NET 9.0 Runtime (x64)
-- AppDllPass.dll is NOT required for the x64 build
+- Pre-built exe: nothing else (the .NET runtime is embedded)
+- Own build: .NET 9.0 Runtime (x64)
 - ACTR.dll file (from USART HMI installation)
 
 ================================================================================
@@ -144,10 +144,15 @@ If you need to modify the decryptor:
 TROUBLESHOOTING
 ================================================================================
 
+Window opens and closes immediately
+-----------------------------------
+Use the current exe: double-clicking it keeps the window open and finds
+ACTR.dll automatically. Or run it from a command prompt / decrypt_actr.bat.
+
+
 Error: "Could not load AppDllPass.dll" / "BadImageFormatException"
 ------------------------------------------------------------------
-You are running the legacy 32-bit exe. Build the x64 version instead:
-  dotnet build ACTRDecryptor.csproj -c Release
+You are running an old 32-bit exe. Use the x64 exe from this folder.
 It does not use AppDllPass.dll.
 
 
@@ -176,7 +181,7 @@ Decode Mode (decrypt ACTR.dll):
     ACTRDecryptor.exe decode "C:\Program Files (x86)\USART HMI\ACTR.dll"
 
   Output:
-    E:\decrypted\*.dll (21 files)
+    C:\Program Files (x86)\USART HMI\decrypted\*.dll (21 files)
 
 
 Encode Mode (re-encrypt DLLs):
@@ -185,7 +190,7 @@ Encode Mode (re-encrypt DLLs):
   ACTRDecryptor.exe encode <path_to_directory>
 
   Example:
-    ACTRDecryptor.exe encode E:\decrypted\
+    ACTRDecryptor.exe encode C:\Program Files (x86)\USART HMI\decrypted\
 
   Output:
     ACTR_translated.dll (in parent directory)
@@ -200,7 +205,7 @@ NOTES
 - Data decryption is deterministic and does not depend on the date/time
 - Output files are standard .NET assemblies (can be opened in dnSpy)
 - Original ACTR.dll is never modified (read-only operation)
-- The tool creates E:\decrypted\ if it doesn't exist
+- The tool creates the output folder if it doesn't exist
 
 ================================================================================
 PERFORMANCE

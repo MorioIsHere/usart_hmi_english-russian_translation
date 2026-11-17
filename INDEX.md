@@ -37,8 +37,7 @@ Located in `tools/`:
 
 - **[ACTRDecryptor.cs](tools/ACTRDecryptor.cs)** - Source code (builds as x64: `dotnet build -c Release`)
 - **[AppDllPassManaged.cs](tools/AppDllPassManaged.cs)** - C# port of the native crypto library
-- **[ACTRDecryptor.exe](tools/ACTRDecryptor.exe)** - Legacy pre-built tool (32-bit)
-- **[AppDllPass.dll](tools/AppDllPass.dll)** - Legacy native crypto library (only for the 32-bit exe)
+- **[ACTRDecryptor.exe](tools/ACTRDecryptor.exe)** - Pre-built tool (x64, self-contained, double-click to run)
 - **[README.txt](tools/README.txt)** - Tool documentation
 
 ---
@@ -101,8 +100,8 @@ final_release/
 ├── INDEX.md                    ← This file
 │
 ├── tools/
-│   ├── ACTRDecryptor.exe       ← Decryption tool
-│   ├── AppDllPass.dll          ← Crypto library
+│   ├── ACTRDecryptor.exe       ← Decryption tool (x64)
+│   ├── AppDllPassManaged.cs    ← Crypto (C# port)
 │   ├── ACTRDecryptor.cs        ← Source code
 │   ├── ACTRDecryptor.csproj    ← Project file
 │   └── README.txt              ← Tool docs

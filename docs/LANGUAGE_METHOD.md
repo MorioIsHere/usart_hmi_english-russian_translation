@@ -9,7 +9,7 @@ This file contains the complete modified `Language()` method for `hmitype.dll`.
 **Assembly:** `hmitype.dll`
 **Class:** (obfuscated Unicode name)
 **Method:** `Language(this string text)`
-**Token:** `0x060005FB`
+**Token:** `0x060005FB` (may differ in other builds, search by name)
 **Return Type:** `string`
 **Parameters:** `this string text`
 **Access:** `public static`
@@ -17,7 +17,52 @@ This file contains the complete modified `Language()` method for `hmitype.dll`.
 
 ---
 
-## Complete Method Code
+## Recommended: insert a block (works with any USART HMI build)
+
+The class names used by the complete method below (`AppServer`, `ACLanguage`) and the
+token may differ between USART HMI builds, which causes compile errors. The safest way is
+to **keep the original method** and insert only this block right after its opening `{`:
+
+```csharp
+try
+{
+    string tf = @"c:\devel\hmi_translation.txt";
+    if (!string.IsNullOrEmpty(text) && System.IO.File.Exists(tf))
+    {
+        foreach (string line in System.IO.File.ReadAllLines(tf, System.Text.Encoding.UTF8))
+        {
+            int tab = line.IndexOf('\t');
+            if (tab > 0 && line.Substring(0, tab) == text)
+                return line.Substring(tab + 1);
+        }
+        System.IO.File.AppendAllText(@"c:\devel\hmi.log", text + "\r\n", System.Text.Encoding.UTF8);
+    }
+}
+catch { }
+```
+
+Result:
+
+```csharp
+public unsafe static string Language(this string text)
+{
+    try
+    {
+        ... block above ...
+    }
+    catch { }
+
+    string result;          // original code continues unchanged
+    if (!AppServer.Appiniiten)
+    ...
+}
+```
+
+Do not delete the `using` lines or the class around the method in the dnSpy editor.
+
+---
+
+## Complete Method Code (alternative)
 
 Copy this entire code block and paste it into dnSpy when editing the method:
 

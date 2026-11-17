@@ -11,16 +11,16 @@ Complete step-by-step guide for modifying `hmitype.dll` using dnSpy.
    - Extract to a folder (e.g., `C:\Tools\dnSpy\`)
 
 2. **Decrypted hmitype.dll**
-   - Location: `E:\decrypted\hmitype.dll`
+   - Location: `C:\Program Files (x86)\USART HMI\decrypted\hmitype.dll`
    - Must be decrypted using ACTRDecryptor first
 
 ---
 
 ## Step 1: Open hmitype.dll in dnSpy
 
-1. Launch **dnSpy.exe** (32-bit recommended)
+1. Launch **dnSpy.exe** (x64 or x86, both work)
 2. Click **File → Open**
-3. Navigate to `E:\decrypted\`
+3. Navigate to `C:\Program Files (x86)\USART HMI\decrypted\`
 4. Select **hmitype.dll**
 5. Click **Open**
 
@@ -41,7 +41,9 @@ The assembly will appear in the left panel.
 4. Look for: `string Language(this string text)`
    - Type: Method
    - Declaring Type: (obfuscated class name)
-   - Token: `060005FB`
+   - Token: `060005FB` (may differ in your USART HMI build, search by name if it does)
+   - Tip: File → Close All first, then open only hmitype.dll; in Search Options enable
+     "Match Whole Words" and "Case Sensitive"
 
 ### Option B: Manual Navigation
 
@@ -95,7 +97,12 @@ public unsafe static string Language(this string text)
 
 ### New Code
 
-**Delete everything** and replace with:
+> **Recommended (works with any USART HMI build):** do NOT delete anything. Insert only the
+> translation block from `LANGUAGE_METHOD.md` ("Recommended" section) right after the
+> method's opening `{`. The editor window also contains the `using` lines and the class
+> around the method; deleting everything causes many compile errors.
+
+Alternative (only if your build matches exactly): replace the method with:
 
 ```csharp
 public unsafe static string Language(this string text)
@@ -251,7 +258,7 @@ You should see a brief progress indicator, then the file is saved.
 Before copying to the installation directory:
 
 ```cmd
-copy "E:\decrypted\hmitype.dll" "E:\decrypted\hmitype.dll.modified"
+copy "C:\Program Files (x86)\USART HMI\decrypted\hmitype.dll" "C:\Program Files (x86)\USART HMI\decrypted\hmitype.dll.modified"
 ```
 
 This allows you to compare original vs. modified later.
@@ -263,10 +270,10 @@ This allows you to compare original vs. modified later.
 Copy the modified DLL to the USART HMI installation:
 
 ```cmd
-copy "E:\decrypted\hmitype.dll" "C:\Program Files (x86)\USART HMI\hmitype.dll"
+copy "C:\Program Files (x86)\USART HMI\decrypted\hmitype.dll" "C:\Program Files (x86)\USART HMI\hmitype.dll"
 ```
 
-**Important:** You must copy ALL 21 DLLs from `E:\decrypted\`, not just `hmitype.dll`.
+**Important:** You must copy ALL 21 DLLs from `C:\Program Files (x86)\USART HMI\decrypted\`, not just `hmitype.dll`.
 
 ---
 

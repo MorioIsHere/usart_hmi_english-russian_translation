@@ -44,13 +44,15 @@ decrypt_actr.bat
 
 This will:
 - Extract 21 encrypted DLLs from `C:\Program Files (x86)\USART HMI\ACTR.dll`
-- Save them to `E:\decrypted\`
-- Take approximately 1-2 minutes
+- Save them to `C:\Program Files (x86)\USART HMI\decrypted\` (or `Documents\USART_HMI_decrypted\` if that folder is not writable)
+- Take a few seconds
+
+You can also simply double-click `tools\ACTRDecryptor.exe`: it finds `ACTR.dll` automatically and keeps the window open.
 
 **Expected output:**
 ```
 Decrypting ACTR.dll...
-Successfully extracted 21 assemblies to E:\decrypted\
+Successfully extracted 21 assemblies to C:\Program Files (x86)\USART HMI\decrypted\
 ```
 
 #### Step 2: Modify hmitype.dll
@@ -59,15 +61,15 @@ This is the critical step where we inject the translation logic.
 
 1. **Open dnSpy (x86 version)**
 2. **Load the DLL:**
-   - File → Open → `E:\decrypted\hmitype.dll`
+   - File → Open → `C:\Program Files (x86)\USART HMI\decrypted\hmitype.dll`
 3. **Find the Language method:**
    - Press `Ctrl+Shift+K` (Search)
    - Type "Language" and search
    - Find the method with signature: `string Language(this string)`
-   - Method Token: `0x060005FB`
+   - Method Token: `0x060005FB` (may differ in other USART HMI builds, search by name)
 4. **Edit the method:**
    - Right-click on the method → "Edit Method (C#)..."
-   - Replace the entire method body with the code from `docs/LANGUAGE_METHOD.md`
+   - Insert the translation block from `docs/LANGUAGE_METHOD.md` ("Recommended" section) right after the method's opening `{`, keeping the original code
    - Click "Compile" (verify no errors)
 5. **Save:**
    - File → Save Module (Ctrl+S)
@@ -118,11 +120,10 @@ Start the application normally. The UI should now display English text for all t
 ├── QUICKSTART.md                # 15-minute setup guide
 ├── INDEX.md                     # Documentation navigation
 ├── tools/
-│   ├── ACTRDecryptor.exe        # Legacy 32-bit pre-built tool (needs AppDllPass.dll)
+│   ├── ACTRDecryptor.exe        # Pre-built x64 tool (self-contained, no .NET install needed)
 │   ├── ACTRDecryptor.cs         # Source code
 │   ├── AppDllPassManaged.cs     # C# port of AppDllPass.dll (x64-ready)
 │   ├── ACTRDecryptor.csproj     # .NET 9.0 project (win-x64)
-│   ├── AppDllPass.dll           # Legacy native 32-bit crypto library (no longer needed by the x64 build)
 │   └── README.txt               # Tool documentation
 ├── scripts/
 │   ├── decrypt_actr.bat         # Automated decryption
@@ -150,7 +151,7 @@ USART HMI.exe
 
 **Our approach:**
 
-1. **Decrypt** ACTR.dll using the included tool (exploits the native `AppDllPass.dll` crypto library)
+1. **Decrypt** ACTR.dll using the included tool (C# port of USART HMI's native `AppDllPass.dll` crypto)
 2. **Modify** `hmitype.dll` to intercept all UI text through the `Language()` extension method
 3. **Bypass** encryption by placing decrypted DLLs directly in the installation folder
 4. **Translate** using a simple text file (`hmi_translation.txt`)
@@ -241,7 +242,9 @@ dotnet build ACTRDecryptor.csproj -c Release
 
 **Output:** `tools\bin\Release\net9.0-windows\win-x64\ACTRDecryptor.exe`
 
-**Note:** The encryption from the native 32-bit `AppDllPass.dll` has been ported to C# (`AppDllPassManaged.cs`, verified byte-for-byte against the original DLL), so the tool builds and runs as 64-bit without any native dependency. `decrypt_actr.bat` uses this x64 build automatically when it exists.
+**Note:** The encryption from USART HMI's native 32-bit `AppDllPass.dll` has been ported to C# (`AppDllPassManaged.cs`, verified byte-for-byte against the original DLL), so the tool builds and runs as 64-bit without any native dependency. `decrypt_actr.bat` uses this build automatically when it exists, otherwise the pre-built `tools\ACTRDecryptor.exe`.
+
+The pre-built exe is a self-contained single file (`dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`), so it runs without installing .NET.
 
 ### 📜 License
 
@@ -295,13 +298,15 @@ decrypt_actr.bat
 
 Esto:
 - Extraerá 21 DLLs encriptadas de `C:\Program Files (x86)\USART HMI\ACTR.dll`
-- Las guardará en `E:\decrypted\`
-- Tomará aproximadamente 1-2 minutos
+- Las guardará en `C:\Program Files (x86)\USART HMI\decrypted\` (o en `Documents\USART_HMI_decrypted\` si esa carpeta no permite escritura)
+- Tomará unos segundos
+
+También puedes hacer doble clic en `tools\ACTRDecryptor.exe`: encuentra `ACTR.dll` automáticamente y mantiene la ventana abierta.
 
 **Salida esperada:**
 ```
 Decrypting ACTR.dll...
-Successfully extracted 21 assemblies to E:\decrypted\
+Successfully extracted 21 assemblies to C:\Program Files (x86)\USART HMI\decrypted\
 ```
 
 #### Paso 2: Modificar hmitype.dll
@@ -310,12 +315,12 @@ Este es el paso crítico donde inyectamos la lógica de traducción.
 
 1. **Abrir dnSpy (versión x86)**
 2. **Cargar la DLL:**
-   - File → Open → `E:\decrypted\hmitype.dll`
+   - File → Open → `C:\Program Files (x86)\USART HMI\decrypted\hmitype.dll`
 3. **Encontrar el método Language:**
    - Presionar `Ctrl+Shift+K` (Buscar)
    - Escribir "Language" y buscar
    - Encontrar el método con firma: `string Language(this string)`
-   - Token del Método: `0x060005FB`
+   - Token del Método: `0x060005FB` (puede variar en otras versiones de USART HMI, busca por nombre)
 4. **Editar el método:**
    - Click derecho en el método → "Edit Method (C#)..."
    - Reemplazar todo el cuerpo del método con el código de `docs/LANGUAGE_METHOD.md`
@@ -369,11 +374,10 @@ Inicia la aplicación normalmente. La UI ahora debería mostrar texto en inglés
 ├── QUICKSTART.md                # Guía de configuración de 15 minutos
 ├── INDEX.md                     # Navegación de documentación
 ├── tools/
-│   ├── ACTRDecryptor.exe        # Herramienta 32-bit heredada (pre-compilada, requiere AppDllPass.dll)
+│   ├── ACTRDecryptor.exe        # Herramienta x64 pre-compilada (autónoma, no requiere instalar .NET)
 │   ├── ACTRDecryptor.cs         # Código fuente
 │   ├── AppDllPassManaged.cs     # Port en C# de AppDllPass.dll (listo para x64)
 │   ├── ACTRDecryptor.csproj     # Proyecto .NET 9.0 (win-x64)
-│   ├── AppDllPass.dll           # Biblioteca nativa 32-bit heredada (ya no la necesita la versión x64)
 │   └── README.txt               # Documentación de herramientas
 ├── scripts/
 │   ├── decrypt_actr.bat         # Desencriptación automatizada
@@ -401,7 +405,7 @@ USART HMI.exe
 
 **Nuestro enfoque:**
 
-1. **Desencriptar** ACTR.dll usando la herramienta incluida (explota la biblioteca criptográfica nativa `AppDllPass.dll`)
+1. **Desencriptar** ACTR.dll usando la herramienta incluida (port en C# del cifrado nativo `AppDllPass.dll` de USART HMI)
 2. **Modificar** `hmitype.dll` para interceptar todo el texto de UI a través del método de extensión `Language()`
 3. **Bypasear** la encriptación colocando las DLLs desencriptadas directamente en la carpeta de instalación
 4. **Traducir** usando un archivo de texto simple (`hmi_translation.txt`)
@@ -492,7 +496,9 @@ dotnet build ACTRDecryptor.csproj -c Release
 
 **Salida:** `tools\bin\Release\net9.0-windows\win-x64\ACTRDecryptor.exe`
 
-**Nota:** El cifrado de la `AppDllPass.dll` nativa de 32-bit fue portado a C# (`AppDllPassManaged.cs`, verificado byte a byte contra la DLL original), por lo que la herramienta se compila y ejecuta en 64-bit sin dependencias nativas. `decrypt_actr.bat` usa automáticamente esta versión x64 si existe.
+**Nota:** El cifrado de la `AppDllPass.dll` nativa de 32-bit fue portado a C# (`AppDllPassManaged.cs`, verificado byte a byte contra la DLL original), por lo que la herramienta se compila y ejecuta en 64-bit sin dependencias nativas. `decrypt_actr.bat` usa automáticamente esta versión si existe; si no, la pre-compilada `tools\ACTRDecryptor.exe`.
+
+El exe pre-compilado es un archivo único autónomo (`dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`), por lo que funciona sin instalar .NET.
 
 ### 📜 Licencia
 
