@@ -1,6 +1,183 @@
-# USART HMI English Translation Guide
+# USART HMI — перевод на русский и английский (x64)
 
-[English](#english) | [Español](#español)
+[Русский](#русский) | [English](#english) | [Español](#español)
+
+Форк проекта [audiobrian/usart_hmi_english_translation](https://github.com/audiobrian/usart_hmi_english_translation), переведённый на **Windows x64 (amd64)**, с исправленными скриптами и русским переводом интерфейса.
+
+---
+
+## Русский
+
+### 🎯 Что это?
+
+**USART HMI** — программа для разработки интерфейсов на HMI-дисплеях TJC / Nextion. Она существует только на китайском языке, и официального способа сменить язык нет.
+
+Этот репозиторий позволяет перевести интерфейс программы на **русский** или **английский**: перевод берётся из обычного текстового файла, который можно дополнять самому.
+
+### ✨ Что изменено в этом форке
+
+| | Оригинал | Этот форк |
+|---|---|---|
+| Платформа инструмента | только x86 (32-bit) | **x64 (amd64)** |
+| `AppDllPass.dll` | нужна (нативная 32-bit DLL) | **не нужна** — шифрование переписано на C# |
+| Установка .NET | нужна | **не нужна** — exe самодостаточный |
+| Запуск двойным щелчком | окно сразу закрывается | находит `ACTR.dll` сам, окно не закрывается |
+| `.bat`-скрипты | падают на пути `Program Files (x86)` | исправлены, папки находятся автоматически |
+| Язык перевода | английский | **русский или английский** на выбор при установке |
+| Правка в dnSpy | замена всего метода (ошибки компиляции на других версиях) | вставка одного блока — работает на любой версии |
+
+Шифрование из `AppDllPass.dll` (`AppDllPassManaged.cs`) проверено на совпадение с оригинальной DLL байт в байт.
+
+### ⚠️ Важно
+
+- **Система:** Windows x64
+- **Программа:** USART HMI v1.67.5 (сама программа остаётся 32-битной — это нормально)
+- Только для личного и учебного использования. Это инструмент локализации, а не взлом лицензии.
+
+### 🚀 Быстрый старт
+
+#### Что понадобится
+
+- USART HMI, установленная в `C:\Program Files (x86)\USART HMI\`
+- Права администратора
+- [dnSpy](https://github.com/dnSpy/dnSpy/releases) — бесплатный редактор .NET-сборок (`dnSpy-net-win64.zip` или `win32`)
+
+#### Шаг 1. Расшифровать ACTR.dll
+
+Дважды щёлкните `tools\ACTRDecryptor.exe` (или запустите `scripts\decrypt_actr.bat`).
+
+Программа сама найдёт `ACTR.dll` и сохранит расшифрованные DLL в папку:
+- `C:\Program Files (x86)\USART HMI\decrypted\`, или
+- `Документы\USART_HMI_decrypted\`, если нет прав на запись в Program Files.
+
+Путь будет показан в конце. Если Windows SmartScreen предупредит о неизвестной программе — «Подробнее» → «Выполнить в любом случае».
+
+#### Шаг 2. Изменить hmitype.dll в dnSpy
+
+1. Запустите dnSpy, **File → Close All**, затем **File → Open** → `hmitype.dll` из папки `decrypted`.
+2. `Ctrl+Shift+K` → в настройках поиска **Search For: Method**, в **Options** включите *Match Whole Words* и *Case Sensitive* → найдите `Language`.
+   Нужный метод: `string Language(this string text)`, внутри есть `ExeLanguage` и `ACLang`.
+3. Правой кнопкой по коду метода → **Edit Method (C#)...**
+4. **Ничего не удаляйте.** Сразу после открывающей `{` метода вставьте блок из [`docs/LANGUAGE_METHOD.md`](docs/LANGUAGE_METHOD.md) (раздел *Recommended*).
+5. **Compile** → **File → Save Module...** → **OK**.
+
+Подробно: [`docs/DNSPY_GUIDE.md`](docs/DNSPY_GUIDE.md).
+
+#### Шаг 3. Установить
+
+1. Закройте USART HMI.
+2. Правой кнопкой по `scripts\install_dlls.bat` → **Запуск от имени администратора**.
+3. Выберите язык: **2 — русский** (или 1 — английский).
+
+Скрипт сделает резервную копию оригинальных файлов в `USART HMI\backup_original\`, скопирует DLL и установит файл перевода в `C:\devel\hmi_translation.txt`.
+
+#### Шаг 4. Запустить USART HMI
+
+Запустите программу как обычно — интерфейс будет переведён. Проверить установку можно скриптом `scripts\verify_installation.bat`.
+
+### 📝 Как дополнить перевод
+
+Фразы без перевода записываются в `C:\devel\hmi.log`. Чтобы перевести их, добавьте строки в `C:\devel\hmi_translation.txt`:
+
+```
+китайский текст<TAB>перевод
+```
+
+- Разделитель — **табуляция**, не пробелы.
+- Кодировка файла — **UTF-8**.
+- После правки перезапустите USART HMI.
+
+Пример:
+```
+指令集	Документация
+资料中心	Официальный сайт
+按下事件	Нажатие
+弹起事件	Отпускание
+```
+
+Готовые переводы лежат в папке `translation/`: `hmi_translation_rus.txt` (русский) и `hmi_translation.txt` (английский).
+
+### ↩️ Как вернуть всё обратно
+
+Скопируйте все файлы из `C:\Program Files (x86)\USART HMI\backup_original\` обратно в `C:\Program Files (x86)\USART HMI\`.
+
+### 🐛 Решение проблем
+
+| Проблема | Решение |
+|---|---|
+| `ACTRDecryptor.exe` не запускается | SmartScreen: «Подробнее» → «Выполнить в любом случае». Проверьте карантин антивируса. |
+| Скрипт «моргает» и закрывается | Используйте скрипты из этого форка — в оригинале они падают на пути `(x86)`. |
+| В dnSpy много ошибок при Compile | Не удаляйте код в окне редактора, вставляйте только блок (шаг 2). |
+| Не находится метод `Language` | Токен `0x060005FB` в вашей версии может отличаться — ищите по имени, см. шаг 2. |
+| Программа не запускается после установки | Скопированы не все 21 DLL — запустите `install_dlls.bat` ещё раз или верните резервную копию. |
+| Перевод не появляется | Проверьте, что существует `C:\devel\hmi_translation.txt` (UTF-8, табуляция) и что сохранён изменённый `hmitype.dll`. |
+
+### 📂 Структура репозитория
+
+```
+├── README.md                    # Это описание
+├── INDEX.md                     # Навигация по документации
+├── tools/
+│   ├── ACTRDecryptor.exe        # Готовый инструмент x64 (самодостаточный)
+│   ├── ACTRDecryptor.cs         # Исходный код
+│   ├── AppDllPassManaged.cs     # Шифрование AppDllPass.dll на C#
+│   ├── ACTRDecryptor.csproj     # Проект .NET 9.0 (win-x64)
+│   └── README.txt               # Описание инструмента
+├── scripts/
+│   ├── decrypt_actr.bat         # Расшифровка
+│   ├── install_dlls.bat         # Установка (от администратора)
+│   └── verify_installation.bat  # Проверка установки
+├── translation/
+│   ├── hmi_translation_rus.txt  # Русский перевод
+│   └── hmi_translation.txt      # Английский перевод
+└── docs/
+    ├── DNSPY_GUIDE.md           # Пошаговая инструкция по dnSpy
+    └── LANGUAGE_METHOD.md       # Код для вставки в Language()
+```
+
+### 🔧 Как это работает
+
+```
+USART HMI.exe
+  └─> ApplicationRUN.dll (загрузчик)
+      └─> ACTR.dll (зашифрованный контейнер с 21 DLL)
+          ├─> hmitype.dll  ← сюда вставляется перевод
+          ├─> achmiface.dll
+          └─> ещё 19 DLL
+```
+
+1. **Расшифровка** `ACTR.dll` — собственная реализация шифрования USART HMI на C#.
+2. **Изменение** метода `Language()` в `hmitype.dll`: через него проходит весь текст интерфейса.
+3. **Подмена**: расшифрованные DLL кладутся в папку программы и загружаются вместо зашифрованных.
+4. **Перевод** берётся из `C:\devel\hmi_translation.txt`, непереведённое пишется в `C:\devel\hmi.log`.
+
+### 🛠️ Сборка инструмента из исходников (необязательно)
+
+Нужен .NET 9.0 SDK:
+
+```batch
+cd tools
+dotnet build ACTRDecryptor.csproj -c Release
+```
+
+Результат: `tools\bin\Release\net9.0-windows\win-x64\ACTRDecryptor.exe` (`decrypt_actr.bat` использует его автоматически).
+
+Самодостаточный exe, как в репозитории:
+
+```batch
+dotnet publish ACTRDecryptor.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
+```
+
+### 🙏 Авторы
+
+- Оригинальный проект и английский перевод — [Brian Sternari (audiobrian)](https://github.com/audiobrian/usart_hmi_english_translation)
+- Улучшения английского перевода — Ginobeano
+- Русский перевод — j0#n
+- Порт на x64, исправления скриптов и документации — этот форк
+
+### 📜 Лицензия
+
+Проект предоставляется «как есть» для личного и учебного использования, не для коммерческого распространения. **USART HMI** принадлежит её правообладателям; репозиторий содержит только инструменты перевода, но не саму программу.
 
 ---
 
@@ -8,253 +185,121 @@
 
 ### 🎯 What is this?
 
-This repository provides a complete solution to translate the **USART HMI** application from Chinese to English.
+**USART HMI** is the IDE for TJC / Nextion HMI displays. It is only available in Chinese, with no official way to change the language.
 
-### 📖 Background Story
+This repository translates the application's UI into **Russian** or **English**, using a plain text file you can extend yourself.
 
-I purchased 3 TJC brand HMI display screens from AliExpress while living in Argentina. These displays can **only** be programmed using the USART HMI application, which is exclusively available in Chinese with no official way to change the language. After searching across multiple forums and communities, I found many people facing the same problem. This repository is my solution to help everyone in the same situation.
+### ✨ What this fork changes
 
-**Supported Version:** USART HMI v1.67.5 (32-bit)
+| | Original | This fork |
+|---|---|---|
+| Tool platform | x86 (32-bit) only | **x64 (amd64)** |
+| `AppDllPass.dll` | required (native 32-bit DLL) | **not needed** — crypto ported to C# |
+| .NET installation | required | **not needed** — self-contained exe |
+| Double-click launch | window closes immediately | finds `ACTR.dll` itself, window stays open |
+| `.bat` scripts | crash on `Program Files (x86)` paths | fixed, folders detected automatically |
+| Translation language | English | **Russian or English**, chosen at install |
+| dnSpy edit | replace whole method (compile errors on other builds) | insert one block — works with any build |
 
-### ⚠️ Important Notes
+The C# port of `AppDllPass.dll` (`AppDllPassManaged.cs`) was verified byte-for-byte against the original DLL.
 
-- **Platform:** Windows x64 (amd64). The decryption tool is now pure C# and builds as 64-bit (`win-x64`)
-- **Target Application:** USART HMI v1.67.5 (the application itself remains 32-bit; the modified `hmitype.dll` is a .NET assembly and is not affected)
-- This is a translation/localization tool, not for piracy or license circumvention
-- Personal and educational use only
+### ⚠️ Important
 
-### 🚀 Quick Start (15 Minutes)
+- **OS:** Windows x64
+- **Application:** USART HMI v1.67.5 (the application itself stays 32-bit — that's fine)
+- Personal and educational use only. This is a localization tool, not license circumvention.
+
+### 🚀 Quick Start
 
 #### Prerequisites
 
-- Windows x64
-- USART HMI v1.67.5 installed at `C:\Program Files (x86)\USART HMI\`
-- Administrator privileges
-- [dnSpy](https://github.com/dnSpy/dnSpy/releases) - Free .NET assembly editor
-- .NET 9.0 SDK (to build the x64 decryption tool)
+- USART HMI installed in `C:\Program Files (x86)\USART HMI\`
+- Administrator rights
+- [dnSpy](https://github.com/dnSpy/dnSpy/releases) — free .NET assembly editor
 
 #### Step 1: Decrypt ACTR.dll
 
-The USART HMI application stores its UI assemblies in an encrypted container (`ACTR.dll`). We need to decrypt it first.
+Double-click `tools\ACTRDecryptor.exe` (or run `scripts\decrypt_actr.bat`).
 
-```batch
-cd scripts
-decrypt_actr.bat
-```
+It finds `ACTR.dll` automatically and writes the decrypted DLLs to:
+- `C:\Program Files (x86)\USART HMI\decrypted\`, or
+- `Documents\USART_HMI_decrypted\` if Program Files is not writable.
 
-This will:
-- Extract 21 encrypted DLLs from `C:\Program Files (x86)\USART HMI\ACTR.dll`
-- Save them to `C:\Program Files (x86)\USART HMI\decrypted\` (or `Documents\USART_HMI_decrypted\` if that folder is not writable)
-- Take a few seconds
+If Windows SmartScreen warns about an unknown app: "More info" → "Run anyway".
 
-You can also simply double-click `tools\ACTRDecryptor.exe`: it finds `ACTR.dll` automatically and keeps the window open.
+#### Step 2: Modify hmitype.dll in dnSpy
 
-**Expected output:**
-```
-Decrypting ACTR.dll...
-Successfully extracted 21 assemblies to C:\Program Files (x86)\USART HMI\decrypted\
-```
+1. Open dnSpy, **File → Close All**, then **File → Open** → `hmitype.dll` from the `decrypted` folder.
+2. `Ctrl+Shift+K` → **Search For: Method**, in **Options** enable *Match Whole Words* and *Case Sensitive* → search `Language`.
+   The target is `string Language(this string text)`, containing `ExeLanguage` and `ACLang`.
+3. Right-click the method code → **Edit Method (C#)...**
+4. **Do not delete anything.** Right after the method's opening `{`, insert the block from [`docs/LANGUAGE_METHOD.md`](docs/LANGUAGE_METHOD.md) (*Recommended* section).
+5. **Compile** → **File → Save Module...** → **OK**.
 
-#### Step 2: Modify hmitype.dll
+Details: [`docs/DNSPY_GUIDE.md`](docs/DNSPY_GUIDE.md).
 
-This is the critical step where we inject the translation logic.
+#### Step 3: Install
 
-1. **Open dnSpy (x86 version)**
-2. **Load the DLL:**
-   - File → Open → `C:\Program Files (x86)\USART HMI\decrypted\hmitype.dll`
-3. **Find the Language method:**
-   - Press `Ctrl+Shift+K` (Search)
-   - Type "Language" and search
-   - Find the method with signature: `string Language(this string)`
-   - Method Token: `0x060005FB` (may differ in other USART HMI builds, search by name)
-4. **Edit the method:**
-   - Right-click on the method → "Edit Method (C#)..."
-   - Insert the translation block from `docs/LANGUAGE_METHOD.md` ("Recommended" section) right after the method's opening `{`, keeping the original code
-   - Click "Compile" (verify no errors)
-5. **Save:**
-   - File → Save Module (Ctrl+S)
+1. Close USART HMI.
+2. Right-click `scripts\install_dlls.bat` → **Run as administrator**.
+3. Choose the language: **1 — English** or **2 — Russian**.
 
-**Complete step-by-step guide with screenshots:** See `docs/DNSPY_GUIDE.md`
+The script backs up the original files to `USART HMI\backup_original\`, copies the DLLs and installs the translation file to `C:\devel\hmi_translation.txt`.
 
-#### Step 3: Install Modified Files
+#### Step 4: Launch USART HMI
 
-**⚠️ Run as Administrator**
+Start the application as usual. You can check the setup with `scripts\verify_installation.bat`.
 
-```batch
-cd scripts
-install_dlls.bat
-```
+### 📝 Adding translations
 
-This script will:
-- Create backup of original files at `C:\Program Files (x86)\USART HMI\backup_original\`
-- Copy all 21 decrypted DLLs to the installation directory
-- Create `c:\devel\` folder
-- Copy `hmi_translation.txt` with 36 pre-configured translations
-- Set up `hmi.log` for tracking untranslated text
-
-#### Step 4: Verify Installation
-
-```batch
-cd scripts
-verify_installation.bat
-```
-
-Expected output:
-```
-✓ All 21 DLLs found
-✓ Translation file exists
-✓ Log directory ready
-Installation verified successfully!
-```
-
-#### Step 5: Launch USART HMI
-
-Start the application normally. The UI should now display English text for all translated items.
-
-### 📂 Repository Structure
+Untranslated text is logged to `C:\devel\hmi.log`. Add lines to `C:\devel\hmi_translation.txt`:
 
 ```
-/
-├── README.md                    # Complete technical documentation
-├── GITHUB_README.md             # This file (user guide)
-├── QUICKSTART.md                # 15-minute setup guide
-├── INDEX.md                     # Documentation navigation
-├── tools/
-│   ├── ACTRDecryptor.exe        # Pre-built x64 tool (self-contained, no .NET install needed)
-│   ├── ACTRDecryptor.cs         # Source code
-│   ├── AppDllPassManaged.cs     # C# port of AppDllPass.dll (x64-ready)
-│   ├── ACTRDecryptor.csproj     # .NET 9.0 project (win-x64)
-│   └── README.txt               # Tool documentation
-├── scripts/
-│   ├── decrypt_actr.bat         # Automated decryption
-│   ├── install_dlls.bat         # Install all files (requires admin)
-│   └── verify_installation.bat  # Verify setup
-├── translation/
-│   └── hmi_translation.txt      # 36 pre-configured translations
-└── docs/
-    ├── DNSPY_GUIDE.md           # Step-by-step dnSpy modification guide
-    └── LANGUAGE_METHOD.md       # Complete Language() method source
+Chinese text<TAB>translation
 ```
 
-### 🔧 How It Works
+Use a **TAB** separator and **UTF-8** encoding, then restart USART HMI. Ready-made files are in `translation/`: `hmi_translation.txt` (English) and `hmi_translation_rus.txt` (Russian).
 
-The USART HMI application uses a three-tier encrypted assembly loading system:
+### ↩️ Uninstall
 
-```
-USART HMI.exe
-  └─> ApplicationRUN.dll (loader)
-      └─> ACTR.dll (encrypted container with 21 DLLs)
-          ├─> hmitype.dll ← Our modification target
-          ├─> achmiface.dll
-          └─> [19 more DLLs]
-```
-
-**Our approach:**
-
-1. **Decrypt** ACTR.dll using the included tool (C# port of USART HMI's native `AppDllPass.dll` crypto)
-2. **Modify** `hmitype.dll` to intercept all UI text through the `Language()` extension method
-3. **Bypass** encryption by placing decrypted DLLs directly in the installation folder
-4. **Translate** using a simple text file (`hmi_translation.txt`)
-
-The modified `Language()` method:
-- Reads `c:\devel\hmi_translation.txt` (tab-separated Chinese→English mappings)
-- Returns English translation if found
-- Logs untranslated Chinese text to `c:\devel\hmi.log`
-- Falls back to original behavior if translation fails
-
-### 📝 Adding New Translations
-
-As you use the application, untranslated Chinese text will be logged to `c:\devel\hmi.log`.
-
-**To add translations:**
-
-1. Check the log file:
-   ```
-   type c:\devel\hmi.log
-   ```
-
-2. Edit `c:\devel\hmi_translation.txt`:
-   ```
-   Chinese Text<TAB>English Translation
-   ```
-
-3. **Important:** Use TAB character (not spaces) as separator
-
-4. Restart USART HMI - changes take effect immediately
-
-**Example:**
-```
-指令集	Instruction Set
-资料中心	Resource Center
-按下事件	Press Event
-弹起事件	Release Event
-```
+Copy everything from `C:\Program Files (x86)\USART HMI\backup_original\` back to `C:\Program Files (x86)\USART HMI\`.
 
 ### 🐛 Troubleshooting
 
-#### Application Won't Start
-**Error:** `System.BadImageFormatException: Could not load file or assembly 'hmioldapp'`
+| Problem | Solution |
+|---|---|
+| `ACTRDecryptor.exe` won't start | SmartScreen: "More info" → "Run anyway". Check antivirus quarantine. |
+| A script flashes and closes | Use the scripts from this fork — the original ones crash on `(x86)` paths. |
+| Many dnSpy compile errors | Don't delete code in the editor window; insert only the block (step 2). |
+| `Language` method not found by token | Token `0x060005FB` may differ in your build — search by name (step 2). |
+| App won't start after install | Not all 21 DLLs were copied — rerun `install_dlls.bat` or restore the backup. |
+| No translation | Check `C:\devel\hmi_translation.txt` exists (UTF-8, TAB) and the modified `hmitype.dll` was saved. |
 
-**Solution:** Copy ALL 21 DLLs, not just the main ones. Run `scripts/install_dlls.bat` again.
+### 🛠️ Building from source (optional)
 
-#### Translations Not Working
-1. Verify `c:\devel\hmi_translation.txt` exists
-2. Check file encoding is UTF-8 (not ANSI)
-3. Verify TAB separator (not spaces)
-4. Confirm hmitype.dll was modified and saved correctly in dnSpy
+Requires the .NET 9.0 SDK:
 
-#### Log File Not Created
-1. Ensure `c:\devel\` folder exists: `mkdir c:\devel`
-2. Verify translation file exists (log only writes when file exists but text not found)
-3. Check application has write permissions
-
-#### dnSpy Compilation Errors
-**Error:** `The name 'Encoding' does not exist in the current context`
-
-**Solution:** Add `using System.Text;` at the top of the file before compiling.
-
-### 🤝 Contributing
-
-**Found untranslated Chinese text?** Please report it!
-
-1. Open an Issue on GitHub
-2. Include the Chinese text from `c:\devel\hmi.log`
-3. Suggest an English translation (optional)
-
-I'll add it to the translation file and update the repository.
-
-**Need the USART HMI v1.67.5 installer?**
-
-If the application is no longer available from official sources, open an Issue and I'll provide a download link.
-
-### 🛠️ Rebuilding ACTRDecryptor (Optional)
-
-If you want to rebuild the decryption tool from source:
-
-**Prerequisites:**
-- .NET 9.0 SDK
-
-**Build:**
 ```batch
 cd tools
 dotnet build ACTRDecryptor.csproj -c Release
 ```
 
-**Output:** `tools\bin\Release\net9.0-windows\win-x64\ACTRDecryptor.exe`
+Output: `tools\bin\Release\net9.0-windows\win-x64\ACTRDecryptor.exe` (used automatically by `decrypt_actr.bat`). Self-contained single file, as shipped:
 
-**Note:** The encryption from USART HMI's native 32-bit `AppDllPass.dll` has been ported to C# (`AppDllPassManaged.cs`, verified byte-for-byte against the original DLL), so the tool builds and runs as 64-bit without any native dependency. `decrypt_actr.bat` uses this build automatically when it exists, otherwise the pre-built `tools\ACTRDecryptor.exe`.
+```batch
+dotnet publish ACTRDecryptor.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
+```
 
-The pre-built exe is a self-contained single file (`dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`), so it runs without installing .NET.
+### 🙏 Credits
+
+- Original project and English translation — [Brian Sternari (audiobrian)](https://github.com/audiobrian/usart_hmi_english_translation)
+- English translation improvements — Ginobeano
+- Russian translation — j0#n
+- x64 port, script and documentation fixes — this fork
 
 ### 📜 License
 
-This project is provided as-is for personal and educational use. Not for commercial redistribution.
-
-**USART HMI** is property of its respective owners. This repository only provides translation tools, not the application itself.
-
-### 💬 Questions?
-
-Open an Issue on GitHub and I'll respond as soon as possible!
+Provided as-is for personal and educational use; not for commercial redistribution. **USART HMI** is property of its respective owners. This repository only provides translation tools, not the application itself.
 
 ---
 
@@ -262,254 +307,25 @@ Open an Issue on GitHub and I'll respond as soon as possible!
 
 ### 🎯 ¿Qué es esto?
 
-Este repositorio proporciona una solución completa para traducir la aplicación **USART HMI** del chino al inglés.
+**USART HMI** es el IDE para las pantallas HMI TJC / Nextion. Solo está disponible en chino, sin forma oficial de cambiar el idioma. Este repositorio traduce la interfaz al **ruso** o al **inglés** mediante un archivo de texto que puedes ampliar.
 
-### 📖 Historia
+Este fork funciona en **Windows x64**: el cifrado de `AppDllPass.dll` fue portado a C# (verificado byte a byte), el exe es autónomo (no requiere instalar .NET) y los scripts `.bat` ya no fallan con rutas `Program Files (x86)`.
 
-Compré 3 pantallas HMI de la marca TJC por AliExpress desde Argentina. Estas pantallas **solo** se pueden programar usando la aplicación USART HMI, que está disponible exclusivamente en chino sin forma oficial de cambiar el idioma. Después de buscar en múltiples foros y comunidades, encontré muchas personas enfrentando el mismo problema. Este repositorio es mi solución para ayudar a todos los que están en la misma situación.
+### 🚀 Inicio rápido
 
-**Versión Soportada:** USART HMI v1.67.5 (32-bit)
+1. **Desencriptar:** doble clic en `tools\ACTRDecryptor.exe` (o `scripts\decrypt_actr.bat`). Los DLL se guardan en `C:\Program Files (x86)\USART HMI\decrypted\` o en `Documentos\USART_HMI_decrypted\`.
+2. **Modificar `hmitype.dll` en [dnSpy](https://github.com/dnSpy/dnSpy/releases):** busca el método `Language` (Search For: Method, *Match Whole Words*), **Edit Method (C#)...**, y **sin borrar nada** inserta el bloque de [`docs/LANGUAGE_METHOD.md`](docs/LANGUAGE_METHOD.md) (sección *Recommended*) justo después de la `{` inicial. **Compile** → **File → Save Module**.
+3. **Instalar:** cierra USART HMI, ejecuta `scripts\install_dlls.bat` como administrador y elige el idioma (1 — inglés, 2 — ruso).
+4. **Iniciar** USART HMI normalmente.
 
-### ⚠️ Notas Importantes
+Textos sin traducir se registran en `C:\devel\hmi.log`; agrégalos a `C:\devel\hmi_translation.txt` con el formato `texto chino<TAB>traducción` (UTF-8).
 
-- **Plataforma:** Windows x64 (amd64). La herramienta de desencriptación ahora es C# puro y se compila como 64-bit (`win-x64`)
-- **Aplicación Objetivo:** USART HMI v1.67.5 (la aplicación sigue siendo de 32-bit; el `hmitype.dll` modificado es un ensamblado .NET y no se ve afectado)
-- Esta es una herramienta de traducción/localización, no para piratería o elusión de licencias
-- Solo para uso personal y educativo
+Para deshacer: copia el contenido de `USART HMI\backup_original\` de vuelta a la carpeta de la aplicación.
 
-### 🚀 Inicio Rápido (15 Minutos)
+### 🙏 Créditos
 
-#### Requisitos Previos
-
-- Windows x64
-- USART HMI v1.67.5 instalado en `C:\Program Files (x86)\USART HMI\`
-- Privilegios de Administrador
-- [dnSpy](https://github.com/dnSpy/dnSpy/releases) - Editor gratuito de ensamblados .NET
-- .NET 9.0 SDK (para compilar la herramienta x64)
-
-#### Paso 1: Desencriptar ACTR.dll
-
-La aplicación USART HMI almacena sus ensamblados de UI en un contenedor encriptado (`ACTR.dll`). Primero necesitamos desencriptarlo.
-
-```batch
-cd scripts
-decrypt_actr.bat
-```
-
-Esto:
-- Extraerá 21 DLLs encriptadas de `C:\Program Files (x86)\USART HMI\ACTR.dll`
-- Las guardará en `C:\Program Files (x86)\USART HMI\decrypted\` (o en `Documents\USART_HMI_decrypted\` si esa carpeta no permite escritura)
-- Tomará unos segundos
-
-También puedes hacer doble clic en `tools\ACTRDecryptor.exe`: encuentra `ACTR.dll` automáticamente y mantiene la ventana abierta.
-
-**Salida esperada:**
-```
-Decrypting ACTR.dll...
-Successfully extracted 21 assemblies to C:\Program Files (x86)\USART HMI\decrypted\
-```
-
-#### Paso 2: Modificar hmitype.dll
-
-Este es el paso crítico donde inyectamos la lógica de traducción.
-
-1. **Abrir dnSpy (versión x86)**
-2. **Cargar la DLL:**
-   - File → Open → `C:\Program Files (x86)\USART HMI\decrypted\hmitype.dll`
-3. **Encontrar el método Language:**
-   - Presionar `Ctrl+Shift+K` (Buscar)
-   - Escribir "Language" y buscar
-   - Encontrar el método con firma: `string Language(this string)`
-   - Token del Método: `0x060005FB` (puede variar en otras versiones de USART HMI, busca por nombre)
-4. **Editar el método:**
-   - Click derecho en el método → "Edit Method (C#)..."
-   - Reemplazar todo el cuerpo del método con el código de `docs/LANGUAGE_METHOD.md`
-   - Click "Compile" (verificar que no haya errores)
-5. **Guardar:**
-   - File → Save Module (Ctrl+S)
-
-**Guía completa paso a paso con capturas:** Ver `docs/DNSPY_GUIDE.md`
-
-#### Paso 3: Instalar Archivos Modificados
-
-**⚠️ Ejecutar como Administrador**
-
-```batch
-cd scripts
-install_dlls.bat
-```
-
-Este script:
-- Creará backup de los archivos originales en `C:\Program Files (x86)\USART HMI\backup_original\`
-- Copiará todas las 21 DLLs desencriptadas al directorio de instalación
-- Creará la carpeta `c:\devel\`
-- Copiará `hmi_translation.txt` con 36 traducciones pre-configuradas
-- Configurará `hmi.log` para rastrear texto no traducido
-
-#### Paso 4: Verificar Instalación
-
-```batch
-cd scripts
-verify_installation.bat
-```
-
-Salida esperada:
-```
-✓ All 21 DLLs found
-✓ Translation file exists
-✓ Log directory ready
-Installation verified successfully!
-```
-
-#### Paso 5: Iniciar USART HMI
-
-Inicia la aplicación normalmente. La UI ahora debería mostrar texto en inglés para todos los elementos traducidos.
-
-### 📂 Estructura del Repositorio
-
-```
-/
-├── README.md                    # Documentación técnica completa
-├── GITHUB_README.md             # Este archivo (guía de usuario)
-├── QUICKSTART.md                # Guía de configuración de 15 minutos
-├── INDEX.md                     # Navegación de documentación
-├── tools/
-│   ├── ACTRDecryptor.exe        # Herramienta x64 pre-compilada (autónoma, no requiere instalar .NET)
-│   ├── ACTRDecryptor.cs         # Código fuente
-│   ├── AppDllPassManaged.cs     # Port en C# de AppDllPass.dll (listo para x64)
-│   ├── ACTRDecryptor.csproj     # Proyecto .NET 9.0 (win-x64)
-│   └── README.txt               # Documentación de herramientas
-├── scripts/
-│   ├── decrypt_actr.bat         # Desencriptación automatizada
-│   ├── install_dlls.bat         # Instalar todos los archivos (requiere admin)
-│   └── verify_installation.bat  # Verificar configuración
-├── translation/
-│   └── hmi_translation.txt      # 36 traducciones pre-configuradas
-└── docs/
-    ├── DNSPY_GUIDE.md           # Guía paso a paso de modificación con dnSpy
-    └── LANGUAGE_METHOD.md       # Código fuente completo del método Language()
-```
-
-### 🔧 Cómo Funciona
-
-La aplicación USART HMI usa un sistema de carga de ensamblados encriptados de tres niveles:
-
-```
-USART HMI.exe
-  └─> ApplicationRUN.dll (cargador)
-      └─> ACTR.dll (contenedor encriptado con 21 DLLs)
-          ├─> hmitype.dll ← Nuestro objetivo de modificación
-          ├─> achmiface.dll
-          └─> [19 DLLs más]
-```
-
-**Nuestro enfoque:**
-
-1. **Desencriptar** ACTR.dll usando la herramienta incluida (port en C# del cifrado nativo `AppDllPass.dll` de USART HMI)
-2. **Modificar** `hmitype.dll` para interceptar todo el texto de UI a través del método de extensión `Language()`
-3. **Bypasear** la encriptación colocando las DLLs desencriptadas directamente en la carpeta de instalación
-4. **Traducir** usando un archivo de texto simple (`hmi_translation.txt`)
-
-El método `Language()` modificado:
-- Lee `c:\devel\hmi_translation.txt` (mapeos Chino→Inglés separados por TAB)
-- Retorna la traducción al inglés si la encuentra
-- Registra texto chino no traducido en `c:\devel\hmi.log`
-- Vuelve al comportamiento original si la traducción falla
-
-### 📝 Agregar Nuevas Traducciones
-
-A medida que uses la aplicación, el texto chino no traducido se registrará en `c:\devel\hmi.log`.
-
-**Para agregar traducciones:**
-
-1. Revisar el archivo de log:
-   ```
-   type c:\devel\hmi.log
-   ```
-
-2. Editar `c:\devel\hmi_translation.txt`:
-   ```
-   Texto Chino<TAB>Traducción al Inglés
-   ```
-
-3. **Importante:** Usar carácter TAB (no espacios) como separador
-
-4. Reiniciar USART HMI - los cambios surten efecto inmediatamente
-
-**Ejemplo:**
-```
-指令集	Instruction Set
-资料中心	Resource Center
-按下事件	Press Event
-弹起事件	Release Event
-```
-
-### 🐛 Solución de Problemas
-
-#### La Aplicación No Inicia
-**Error:** `System.BadImageFormatException: Could not load file or assembly 'hmioldapp'`
-
-**Solución:** Copiar TODAS las 21 DLLs, no solo las principales. Ejecutar `scripts/install_dlls.bat` nuevamente.
-
-#### Las Traducciones No Funcionan
-1. Verificar que `c:\devel\hmi_translation.txt` existe
-2. Verificar que la codificación del archivo es UTF-8 (no ANSI)
-3. Verificar separador TAB (no espacios)
-4. Confirmar que hmitype.dll fue modificada y guardada correctamente en dnSpy
-
-#### El Archivo de Log No Se Crea
-1. Asegurar que la carpeta `c:\devel\` existe: `mkdir c:\devel`
-2. Verificar que el archivo de traducción existe (el log solo escribe cuando el archivo existe pero no se encuentra el texto)
-3. Verificar que la aplicación tiene permisos de escritura
-
-#### Errores de Compilación en dnSpy
-**Error:** `The name 'Encoding' does not exist in the current context`
-
-**Solución:** Agregar `using System.Text;` al inicio del archivo antes de compilar.
-
-### 🤝 Contribuir
-
-**¿Encontraste texto chino no traducido?** ¡Por favor repórtalo!
-
-1. Abre un Issue en GitHub
-2. Incluye el texto chino de `c:\devel\hmi.log`
-3. Sugiere una traducción al inglés (opcional)
-
-Lo agregaré al archivo de traducción y actualizaré el repositorio.
-
-**¿Necesitas el instalador de USART HMI v1.67.5?**
-
-Si la aplicación ya no está disponible desde fuentes oficiales, abre un Issue y proporcionaré un enlace de descarga.
-
-### 🛠️ Recompilar ACTRDecryptor (Opcional)
-
-Si quieres recompilar la herramienta de desencriptación desde el código fuente:
-
-**Requisitos previos:**
-- .NET 9.0 SDK
-
-**Compilar:**
-```batch
-cd tools
-dotnet build ACTRDecryptor.csproj -c Release
-```
-
-**Salida:** `tools\bin\Release\net9.0-windows\win-x64\ACTRDecryptor.exe`
-
-**Nota:** El cifrado de la `AppDllPass.dll` nativa de 32-bit fue portado a C# (`AppDllPassManaged.cs`, verificado byte a byte contra la DLL original), por lo que la herramienta se compila y ejecuta en 64-bit sin dependencias nativas. `decrypt_actr.bat` usa automáticamente esta versión si existe; si no, la pre-compilada `tools\ACTRDecryptor.exe`.
-
-El exe pre-compilado es un archivo único autónomo (`dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`), por lo que funciona sin instalar .NET.
+Proyecto original — [Brian Sternari (audiobrian)](https://github.com/audiobrian/usart_hmi_english_translation); mejoras de la traducción inglesa — Ginobeano; traducción rusa — j0#n; port a x64 y correcciones — este fork.
 
 ### 📜 Licencia
 
-Este proyecto se proporciona tal cual para uso personal y educativo. No para redistribución comercial.
-
-**USART HMI** es propiedad de sus respectivos dueños. Este repositorio solo proporciona herramientas de traducción, no la aplicación en sí.
-
-### 💬 ¿Preguntas?
-
-¡Abre un Issue en GitHub y responderé lo antes posible!
-
----
-
-**Made with ❤️ by someone who just wanted to program their HMI displays**
+Proporcionado tal cual para uso personal y educativo; no para redistribución comercial. **USART HMI** pertenece a sus respectivos propietarios.
